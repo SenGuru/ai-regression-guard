@@ -9,7 +9,7 @@ authors = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/ai-regression-guard"
+Homepage = "https://github.com/SenGuru/ai-regression-guard"
 
 [project.scripts]
 ai-regression-guard = "cli.main:main"
