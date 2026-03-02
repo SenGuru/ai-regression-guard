@@ -1,22 +1,18 @@
 # AI Regression Guard
 
-Developer-first AI regression & failure detection system for production LLM applications.
+**Catch AI quality regressions before they hit production.**
 
-## What is this?
-
-A system that automatically detects when your AI app's behavior gets worse (regresses) after changes to prompts, models, or agent logic - and can fail CI before bad AI reaches users.
-
-Think of it as **tests + monitoring for AI behavior**.
-
-## 5-Minute Quickstart
-
-### 1. Install
+Stop shipping broken prompts. Add an automated quality gate to your CI that fails when your LLM's behavior degrades.
 
 ```bash
 pip install ai-regression-guard
 ```
 
-### 2. Create test suite
+Like unit tests, but for AI behavior. Works with OpenAI, Anthropic, and any LLM.
+
+## 5-Minute Quickstart
+
+### 1. Create test suite
 
 Create `suite.json` with test cases:
 
@@ -51,20 +47,16 @@ Create `suite.json` with test cases:
 }
 ```
 
-### 3. Generate baseline
+### 2. Generate baseline
 
 ```bash
-export OPENAI_API_KEY="your-key"
-
 ai-regression-guard baseline \
   --suite suite.json \
   --provider openai \
   --model gpt-4
 ```
 
-This creates `.baselines/support_ticket_classifier.json` with per-case scores.
-
-### 4. Check for regressions
+### 3. Check for regressions
 
 ```bash
 ai-regression-guard check \
@@ -74,41 +66,35 @@ ai-regression-guard check \
   --threshold 0.05
 ```
 
-**Exit codes:**
-- `0` = No regression (CI passes ✅)
-- `1` = Regression detected (CI fails ❌)
+Exit code 0 = pass, 1 = regression detected (fails CI).
 
-**On regression, you'll see:**
+**On failure, see exactly what degraded:**
 ```
 [X] REGRESSION DETECTED
 
 TOP 3 WORST CASES:
-1. billing_refund
-   Baseline: 0.92 | New: 0.65 | Delta: -0.27
-   Failing scorers: contains, llm_judge
-   Judge: Missing billing terminology
-
-FULL PER-CASE REPORT:
-Case ID           Baseline   New     Delta  Failing Scorers    Judge Reason
---------------------------------------------------------------------------------
-billing_refund    0.92       0.65    -0.27  contains, judge    Missing billing...
-password_reset    0.88       0.87    -0.01  -                  Minor wording...
+1. billing_refund: -0.27 (missing key phrases)
+2. password_reset: -0.15 (wrong category)
 ```
 
-### 5. Set up CI/CD
+### 4. Add to GitHub Actions
 
-See `examples/demo_repo/` for a complete working example with GitHub Actions.
+`.github/workflows/ai-quality-gate.yml`:
 
-```bash
-# Clone the demo
-cd examples/demo_repo
-
-# Try it yourself
-ai-regression-guard check \
-  --suite suite_semantic.json \
-  --provider openai \
-  --model gpt-4
+```yaml
+- name: AI Quality Gate
+  run: |
+    pip install ai-regression-guard
+    ai-regression-guard check \
+      --suite suite.json \
+      --provider openai \
+      --model gpt-4 \
+      --threshold 0.05
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 ```
+
+**Complete working example:** See `examples/demo_repo/` for a full repo with baseline and workflow.
 
 ## How It Works
 

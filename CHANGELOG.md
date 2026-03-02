@@ -5,6 +5,27 @@ All notable changes to ai-regression-guard will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2024-03-02
+
+### Added
+- **Cloud Upload Mode**: Upload run reports to hosted API with shareable URLs
+- `--cloud` flag for `check` command to enable cloud upload
+- `--cloud-url` flag to configure cloud API endpoint (default: https://api.ai-regression-guard.com)
+- `--cloud-project` flag to specify project identifier
+- `--cloud-api-key` flag for API authentication (or use `AIRG_API_KEY` env var)
+- New `cloud/` module with upload client using stdlib urllib
+- Automatic retry logic for cloud uploads (1 retry with 10s timeout)
+- Comprehensive cloud upload tests with mocked HTTP requests
+
+### Changed
+- Cloud upload failures print warnings but don't affect CI exit codes
+- API keys are never logged or printed in output
+- Cloud reports include tool version, timestamps, and per-case breakdowns
+
+### Security
+- API keys sanitized from error messages
+- Cloud upload is opt-in only (disabled by default)
+
 ## [0.5.0] - 2024-01-XX
 
 ### Added

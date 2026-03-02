@@ -4,6 +4,8 @@ CLI for AI Regression Guard.
 import argparse
 import json
 import sys
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add parent to path for imports
@@ -20,6 +22,7 @@ from core.scoring import (
 from core.regressions import detect_regression
 from core.baselines import BaselineStore, CaseScore
 from providers import get_provider
+from cloud.client import upload_run, get_error_message
 
 
 def load_cases_file(cases_path: str) -> dict:
@@ -607,12 +610,72 @@ def check_command(args):
         print()
 
         print("Quality degraded beyond threshold - FAILING CI")
-        return 1
+        exit_code = 1
     else:
         print("[OK] NO REGRESSION")
         print()
         print("Quality maintained or improved - PASSING CI")
-        return 0
+        exit_code = 0
+
+    # Cloud upload (if enabled)
+    if getattr(args, 'cloud', False):
+        try:
+            # Get API key from flag or env
+            api_key = getattr(args, 'cloud_api_key', None) or os.getenv('AIRG_API_KEY')
+            if not api_key:
+                print("[WARNING] Cloud upload skipped: No API key provided (use --cloud-api-key or AIRG_API_KEY env var)")
+            else:
+                # Build cloud report
+                cloud_report = {
+                    "tool_version": "0.6.0",
+                    "run_id": run_id,
+                    "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+                    "suite_path": getattr(args, 'suite', None),
+                    "provider": args.provider,
+                    "model": args.model,
+                    "threshold": args.threshold,
+                    "overall": {
+                        "baseline_avg": baseline_avg,
+                        "new_avg": new_avg,
+                        "delta": overall_delta,
+                        "verdict": "FAIL" if is_regression else "PASS"
+                    },
+                    "per_case": [
+                        {
+                            "case_id": case_data["case_id"],
+                            "baseline_total": case_data["baseline_total"],
+                            "new_total": case_data["new_total"],
+                            "delta": case_data["delta"],
+                            "failing_scorers": case_data["failing_scorers"],
+                            "judge_reason": case_data["judge_reason"][:200] if case_data["judge_reason"] else None
+                        }
+                        for case_data in case_deltas
+                    ]
+                }
+
+                # Upload to cloud
+                cloud_url = getattr(args, 'cloud_url', 'https://api.ai-regression-guard.com')
+                cloud_project = getattr(args, 'cloud_project', None)
+
+                if not cloud_project:
+                    print("[WARNING] Cloud upload skipped: No project specified (use --cloud-project)")
+                else:
+                    try:
+                        run_url = upload_run(cloud_report, cloud_url, api_key, cloud_project)
+                        print()
+                        print(f"CLOUD REPORT: {run_url}")
+                    except Exception as e:
+                        error_msg = get_error_message(e)
+                        print()
+                        print(f"[WARNING] Cloud upload failed: {error_msg}")
+
+        except Exception as e:
+            # Catch any unexpected errors in cloud upload logic
+            error_msg = get_error_message(e)
+            print()
+            print(f"[WARNING] Cloud upload failed: {error_msg}")
+
+    return exit_code
 
 
 def main():
@@ -726,6 +789,27 @@ def main():
         "--no-cache",
         action="store_true",
         help="Disable judge result caching (for debugging only, not recommended in CI)"
+    )
+    check_parser.add_argument(
+        "--cloud",
+        action="store_true",
+        help="Upload run report to cloud and get shareable URL"
+    )
+    check_parser.add_argument(
+        "--cloud-url",
+        type=str,
+        default="https://api.ai-regression-guard.com",
+        help="Cloud API base URL (default: https://api.ai-regression-guard.com)"
+    )
+    check_parser.add_argument(
+        "--cloud-project",
+        type=str,
+        help="Cloud project identifier/slug"
+    )
+    check_parser.add_argument(
+        "--cloud-api-key",
+        type=str,
+        help="Cloud API key (or set AIRG_API_KEY env var)"
     )
 
     args = parser.parse_args()
