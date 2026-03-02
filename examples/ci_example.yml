@@ -1,0 +1,87 @@
+# Example GitHub Actions workflow
+# Copy this to .github/workflows/ai-regression-check.yml
+
+name: AI Regression Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  ai-regression-test:
+    runs-on: ubuntu-latest
+    name: Check AI Output Quality
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check AI Regression (with real LLM)
+        uses: ./ci/github_action
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          command: 'check'
+          suite-path: 'examples/suite.json'
+          provider: 'openai'
+          model: 'gpt-4'
+          baseline-path: '.baselines'
+          threshold: '0.10'
+
+# Alternative: Use fake provider for testing without API costs
+#
+# jobs:
+#   ai-regression-test-fake:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#       - uses: ./ci/github_action
+#         with:
+#           command: 'check'
+#           suite-path: 'examples/suite.json'
+#           provider: 'fake'
+#           model: 'test'
+#           threshold: '0.10'
+
+# Alternative: Run directly with CLI (if installed via pip)
+#
+# jobs:
+#   ai-regression-test:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.10'
+#
+#       - name: Install AI Regression Guard
+#         run: pip install ai-regression-guard
+#
+#       - name: Run regression check
+#         env:
+#           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#         run: |
+#           ai-regression-guard check \
+#             --suite examples/suite.json \
+#             --provider openai \
+#             --model gpt-4 \
+#             --baseline .baselines \
+#             --threshold 0.10
+
+# Legacy: Using pre-generated outputs (v0.2 style)
+#
+# jobs:
+#   ai-regression-test-legacy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#       - uses: ./ci/github_action
+#         with:
+#           command: 'run'
+#           run-id: 'support_ticket_classifier'
+#           cases-path: 'examples/cases.json'
+#           threshold: '0.10'

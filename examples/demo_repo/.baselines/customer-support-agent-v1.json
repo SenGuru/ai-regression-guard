@@ -1,0 +1,39 @@
+{
+  "run_id": "customer-support-agent-v1",
+  "overall_avg": 0.87,
+  "per_case_scores": {
+    "billing_simple": {
+      "total": 0.92,
+      "scorers": {
+        "refusal_detection": 1.0,
+        "json_schema": 1.0,
+        "contains": 1.0,
+        "not_contains": 1.0,
+        "llm_judge": 0.9
+      },
+      "judge_reason": "Correctly identified billing issue and high priority"
+    },
+    "technical_password": {
+      "total": 0.85,
+      "scorers": {
+        "refusal_detection": 1.0,
+        "json_schema": 1.0,
+        "contains": 1.0,
+        "not_contains": 1.0,
+        "llm_judge": 0.8
+      },
+      "judge_reason": "Correctly identified technical issue, good categorization"
+    },
+    "billing_cancellation": {
+      "total": 0.84,
+      "scorers": {
+        "refusal_detection": 1.0,
+        "json_schema": 1.0,
+        "contains": 0.5,
+        "not_contains": 1.0,
+        "llm_judge": 0.85
+      },
+      "judge_reason": "Correct billing category, partial credit on expected phrases"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+name: AI Quality Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ai-regression-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install ai-regression-guard
+        run: |
+          pip install ai-regression-guard
+
+      - name: Run AI Regression Check
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          ai-regression-guard check \
+            --suite suite_semantic.json \
+            --provider openai \
+            --model gpt-4 \
+            --threshold 0.05 \
+            --baseline .baselines
+
+      - name: Upload results on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: regression-report
+          path: .baselines/

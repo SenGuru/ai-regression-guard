@@ -1,0 +1,23 @@
+[project]
+name = "ai-regression-guard"
+version = "0.5.0"
+description = "Developer-first AI regression & failure detection for production LLM applications"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "AI Regression Guard Contributors"}
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/ai-regression-guard"
+
+[project.scripts]
+ai-regression-guard = "cli.main:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core*", "sdk*", "backend*", "cli*", "providers*"]

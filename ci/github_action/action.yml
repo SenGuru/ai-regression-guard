@@ -1,0 +1,86 @@
+name: 'AI Regression Guard'
+description: 'Detect AI behavior regressions before they reach production'
+author: 'AI Regression Guard Contributors'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  command:
+    description: 'Command to run: run (legacy), baseline, or check'
+    required: false
+    default: 'check'
+  suite-path:
+    description: 'Path to test suite JSON file (for baseline/check commands)'
+    required: false
+  provider:
+    description: 'LLM provider: openai, anthropic, or fake'
+    required: false
+    default: 'fake'
+  model:
+    description: 'Model name (e.g., gpt-4, claude-3-5-sonnet-20241022)'
+    required: false
+    default: 'test-model'
+  baseline-path:
+    description: 'Path to baseline storage directory'
+    required: false
+    default: '.baselines'
+  threshold:
+    description: 'Regression threshold (0.0 to 1.0)'
+    required: false
+    default: '0.05'
+  # Legacy inputs (for backward compatibility with 'run' command)
+  run-id:
+    description: '[Legacy] Run identifier for baseline tracking'
+    required: false
+  cases-path:
+    description: '[Legacy] Path to test cases JSON file'
+    required: false
+
+outputs:
+  result:
+    description: 'Result of regression check (pass/fail)'
+  baseline-score:
+    description: 'Baseline score'
+  new-score:
+    description: 'New average score'
+  delta:
+    description: 'Score delta'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install AI Regression Guard
+      shell: bash
+      run: |
+        pip install -e ${{ github.action_path }}/../..
+
+    - name: Run Check Command
+      if: inputs.command == 'check' || inputs.command == 'baseline'
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ env.ANTHROPIC_API_KEY }}
+      run: |
+        python -m cli.main ${{ inputs.command }} \
+          --suite "${{ inputs.suite-path }}" \
+          --provider ${{ inputs.provider }} \
+          --model ${{ inputs.model }} \
+          --baseline "${{ inputs.baseline-path }}" \
+          --threshold ${{ inputs.threshold }}
+
+    - name: Run Legacy Command
+      if: inputs.command == 'run'
+      shell: bash
+      run: |
+        python -m cli.main run \
+          --run-id "${{ inputs.run-id }}" \
+          --cases "${{ inputs.cases-path }}" \
+          --baseline "${{ inputs.baseline-path }}" \
+          --threshold ${{ inputs.threshold }}

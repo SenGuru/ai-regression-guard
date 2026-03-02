@@ -1,0 +1,32 @@
+{
+  "run_id": "support_ticket_classifier",
+  "schema": {
+    "category": {
+      "type": "string",
+      "enum": ["billing", "technical", "account", "other"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "summary": {
+      "type": "string"
+    }
+  },
+  "scorer_weights": {
+    "refusal": 0.3,
+    "schema": 0.7
+  },
+  "outputs": [
+    {
+      "category": "billing",
+      "summary": "Payment issue"
+    },
+    {
+      "category": "technical"
+    },
+    {
+      "summary": "Some issue"
+    }
+  ]
+}

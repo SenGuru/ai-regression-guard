@@ -1,0 +1,41 @@
+{
+  "run_id": "support_ticket_classifier",
+  "schema": {
+    "category": {
+      "type": "string",
+      "enum": ["billing", "technical", "account", "other"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "summary": {
+      "type": "string"
+    }
+  },
+  "scorer_weights": {
+    "refusal": 0.3,
+    "schema": 0.7
+  },
+  "prompt_template": "You are a support ticket classifier. Classify the following support ticket and return ONLY a JSON object with these fields: category (one of: billing, technical, account, other), priority (one of: low, medium, high), and summary (a brief description).\n\nTicket: {text}\n\nRespond with JSON only, no other text.",
+  "cases": [
+    {
+      "id": "billing_payment_issue",
+      "input": {
+        "text": "Customer is unable to process payment. Credit card keeps getting declined."
+      }
+    },
+    {
+      "id": "technical_api_timeout",
+      "input": {
+        "text": "Getting API timeout errors on checkout endpoint. Returns 504 after 30 seconds."
+      }
+    },
+    {
+      "id": "account_email_update",
+      "input": {
+        "text": "User wants to update their email address from old@example.com to new@example.com"
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "run_id": "support_ticket_classifier_semantic",
+  "schema": {
+    "category": {
+      "type": "string",
+      "enum": ["billing", "technical", "account", "other"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "summary": {
+      "type": "string"
+    }
+  },
+  "scorer_weights": {
+    "refusal": 0.2,
+    "schema": 0.3,
+    "contains": 0.2,
+    "not_contains": 0.1,
+    "judge": 0.2
+  },
+  "prompt_template": "You are a support ticket classifier. Classify the following support ticket and return ONLY a JSON object with these fields: category (one of: billing, technical, account, other), priority (one of: low, medium, high), and summary (a brief description).\n\nTicket: {text}\n\nRespond with JSON only, no other text.",
+  "default_rubric": "Score 0-1. Output must: (1) classify category correctly based on ticket content, (2) assign appropriate priority, (3) include brief factual summary, (4) avoid hallucinations or refusals.",
+  "cases": [
+    {
+      "id": "billing_payment_issue",
+      "input": {
+        "text": "Customer is unable to process payment. Credit card keeps getting declined even though they have sufficient funds."
+      },
+      "expected_contains": ["billing", "payment", "credit card"],
+      "expected_not_contains": ["cannot help", "as an ai", "i don't have access"],
+      "rubric": "Score 0-1. Must classify as billing with high priority. Summary must mention payment/credit card issue. No hallucinations."
+    },
+    {
+      "id": "technical_api_timeout",
+      "input": {
+        "text": "Getting API timeout errors on checkout endpoint. Returns 504 after 30 seconds. Started happening after yesterday's deploy."
+      },
+      "expected_contains": ["technical", "api", "timeout"],
+      "expected_not_contains": ["cannot help", "sorry"],
+      "rubric": "Score 0-1. Must classify as technical with medium/high priority. Summary must reference API/timeout issue."
+    },
+    {
+      "id": "account_email_update",
+      "input": {
+        "text": "User wants to update their email address from old@example.com to new@example.com. No urgency."
+      },
+      "expected_contains": ["account", "email"],
+      "expected_not_contains": ["cannot", "unable"],
+      "rubric": null
+    },
+    {
+      "id": "edge_case_ambiguous",
+      "input": {
+        "text": "Customer says app is slow when processing payments."
+      },
+      "expected_contains": [],
+      "expected_not_contains": ["i don't know", "cannot help"],
+      "rubric": "Score 0-1. Could be technical OR billing. Either is acceptable if reasoning is sound. Must assign priority and avoid refusals."
+    }
+  ]
+}

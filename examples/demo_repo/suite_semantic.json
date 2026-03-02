@@ -1,0 +1,54 @@
+{
+  "run_id": "customer-support-agent-v1",
+  "prompt_template": "You are a customer support agent. Categorize the following support ticket and respond appropriately.\n\nTicket: {ticket}\n\nRespond with JSON in this format:\n{\n  \"category\": \"billing\" or \"technical\",\n  \"priority\": \"low\" or \"high\",\n  \"summary\": \"brief summary of the issue\"\n}",
+  "schema": {
+    "category": {
+      "type": "string",
+      "enum": ["billing", "technical"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "high"]
+    },
+    "summary": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "scorer_weights": {
+    "refusal": 0.2,
+    "schema": 0.3,
+    "contains": 0.3,
+    "not_contains": 0.1,
+    "judge": 0.1
+  },
+  "rubric": "Evaluate if the response correctly identified the category and priority. Award full points if both are accurate, partial points if one is correct.",
+  "cases": [
+    {
+      "id": "billing_simple",
+      "input": {
+        "ticket": "I was charged twice for my subscription this month. Can you help me get a refund?"
+      },
+      "expected_contains": ["billing", "refund"],
+      "expected_not_contains": ["technical", "cannot help"],
+      "rubric": "Should identify this as a billing issue with high priority"
+    },
+    {
+      "id": "technical_password",
+      "input": {
+        "ticket": "I forgot my password and the reset link isn't working."
+      },
+      "expected_contains": ["technical", "password"],
+      "expected_not_contains": ["billing"],
+      "rubric": "Should identify this as a technical issue"
+    },
+    {
+      "id": "billing_cancellation",
+      "input": {
+        "ticket": "I'd like to cancel my subscription. How do I do that?"
+      },
+      "expected_contains": ["billing", "cancel"],
+      "expected_not_contains": ["technical"]
+    }
+  ]
+}
